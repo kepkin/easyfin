@@ -19,7 +19,7 @@ def lala(request):
     data = []
     for o in RegularExpenses.objects.all():
         c = o.money.get_income(Period.this_month())
-        data.append("{}.{}".format(*c))
+        data.append("{0}.{1}".format(*c))
     json_data = serializers.serialize("json", RegularExpenses.objects.all())
     return HttpResponse(json_data, content_type="application/json")
 
@@ -33,8 +33,8 @@ def getExpenses(request):
     data = []
     p = Period.this_month()
     for i in RegularExpenses.objects.all():
-        plan = "{}.{}".format(i.amount, i.cents)
-        real = "{}.{}".format(*i.money.get_income(p))
+        plan = "{0}.{1}".format(i.amount, i.cents)
+        real = "{0}.{1}".format(*i.money.get_income(p))
         data.append({'pk': i.pk, 'name': i.money.name, 'plan': plan, 'real': real})
     return HttpResponse(json.dumps(data), content_type="application/json")
 

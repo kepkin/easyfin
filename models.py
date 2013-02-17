@@ -8,7 +8,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=200, primary_key=True)
     
     def __unicode__(self):
-        return u"{}".format(self.name)
+        return u"{0}".format(self.name)
 
 class MoneyHolder(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -34,7 +34,7 @@ class MoneyHolder(models.Model):
         return self.sum_transactions(data)
     
     def __unicode__(self):
-        return u"{} {}.{}".format(self.name, self.amount, self.cents)
+        return u"{0} {1}.{2}".format(self.name, self.amount, self.cents)
 
 class RegularExpenses(models.Model):
     money = models.ForeignKey(MoneyHolder)
@@ -44,7 +44,7 @@ class RegularExpenses(models.Model):
     stop = models.DateField()
     
     def __unicode__(self):
-        return u"{} (from {} to {}): {}.{}".format(self.money.name, self.start, self.stop, self.amount, self.cents)
+        return u"{0} (from {1} to {2}): {3}.{4}".format(self.money.name, self.start, self.stop, self.amount, self.cents)
     
 class Aim(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -53,7 +53,7 @@ class Aim(models.Model):
     stop = models.DateField()
     
     def __unicode__(self):
-        return u"{} - {} ({} -> {})".format(self.name, self.money, self.start, self.stop)
+        return u"{0} - {1} ({2} -> {3})".format(self.name, self.money, self.start, self.stop)
     
 class Transactions(models.Model):
     description = models.CharField(max_length=300)
@@ -64,7 +64,7 @@ class Transactions(models.Model):
     date = models.DateField()
     
     def __unicode__(self):
-        return u"{}.{} ({} -> {})".format(self.ammount, self.cents, self.source, self.destination)
+        return u"{0}.{1} ({2} -> {3})".format(self.ammount, self.cents, self.source, self.destination)
     
     @classmethod
     def in_period(cls, period):
@@ -92,7 +92,7 @@ class Period(object):
         return unicode(self)
     
     def __repr__(self):
-        return "<Period {}>".format(self)
+        return "<Period {0}>".format(self)
     
     def __unicode__(self):
-        return u"{} -> {}".format(self.date_from, self.date_to)
+        return u"{0} -> {1}".format(self.date_from, self.date_to)
