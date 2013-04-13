@@ -209,6 +209,7 @@
 			    $(self.Parent).append("<li><a href='#'>&raquo;</a></li>");
 			    
 			    self.bindEvents();
+			    self.Model.getData(self.Selected.y, self.Selected.m + 1);
 			}
 			
 			self.bindEvents = function()
@@ -228,7 +229,6 @@
 						index = $(this).html().search("<br>");
 						self.Selected.m = $(this).html().substring(0, index) - 1;
 						self.Selected.y = $(this).html().substring(index + 4);
-						self.Model.getData(self.Selected.y, self.Selected.m);
 					}
 					self.Build();
 				});
