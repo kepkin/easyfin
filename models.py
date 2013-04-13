@@ -81,6 +81,10 @@ class Period(object):
         today = datetime.date.today()
         return cls.month(today.year, today.month)
     
+    @classmethod
+    def specific_month(cls, year, month):
+        return cls.month(year, month)
+    
     @staticmethod
     def month(year, month):
         start = datetime.date(year, month, 1)

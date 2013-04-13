@@ -35,6 +35,9 @@
 #transaction_items .ui-selecting { background: #FECA40; }
 #transaction_items .ui-selected { background: #F39814; color: white; }
 #transaction_items { margin: 0; padding: 0;}
+
+#expense_date li { text-align: center; }
+
 </style>
 
 <body>
@@ -57,9 +60,6 @@
 
 					<div id="expense_date" class="pagination">
 						<ul>
-							<li><a href="#">&laquo;</a></li>
-							<li class="active"><a href="#">1</a></li>
-							<li><a href="#">&raquo;</a></li>
 						</ul>
 					</div>
 
@@ -115,6 +115,128 @@
 		</div>
 	</div>
 	<script>
+		function Calendar()
+		{
+			this.DateValue = new Date();
+			var self = this;
+			
+			this.NextMonth = function()
+			{
+				cur_m = this.DateValue.getMonth();
+				cur_y = this.DateValue.getFullYear();
+				if (cur_m == 11)
+				{
+					cur_y = cur_y + 1;
+					cur_m = 1;
+				}
+				else
+				{
+					cur_m = cur_m + 2;
+				}
+				
+				this.DateValue = new Date(cur_y, cur_m, 0);
+			}
+			
+			this.PrevMonth = function()
+			{
+				cur_m = this.DateValue.getMonth();
+				cur_y = this.DateValue.getFullYear();
+				if (cur_m == 0)
+				{
+					cur_y = cur_y - 1;
+					cur_m = 12;
+				}
+				
+				this.DateValue = new Date(cur_y, cur_m, 0);
+			}
+		}
+	
+		function ExpenseDatePagination(model)
+		{
+			var self = this;
+			self.Current = new Calendar();
+			self.Selected = {'m': 3, 'y': 2013};
+			self.Selector = "#expense_date";
+			self.Parent = self.Selector + " ul";
+			self.Link = self.Selector + " a";
+			self.Model = model
+			
+			self.Next = function()
+			{
+				self.Current.NextMonth();
+			}
+			
+			self.Prev = function()
+			{
+				self.Current.PrevMonth();
+			}
+			
+			
+			self.AddItemBack = function(month, year)
+			{
+				$(self.Parent).prepend(self.GetItemHtml(month, year));	
+			}
+			
+			self.AddItemForth = function(month, year)
+			{
+				$(self.Parent).append(self.GetItemHtml(month, year));	
+			}
+			
+			self.GetItemHtml = function(month, year)
+			{
+				result = month == self.Selected.m && year == self.Selected.y ? "<li class='active'>" : "<li>";
+				result = result + "<a href='#'>" + (month + 1) + "<br>" + year + "</a></li>";
+				return result;
+			}
+			
+			self.Build = function()
+			{
+				var calb = jQuery.extend(true, {}, self.Current);
+				var calf = jQuery.extend(true, {}, self.Current);
+				
+				$(self.Parent).html("");
+			    for (i = 0; i < 3; i++)
+			    {
+			    	calb.PrevMonth();
+			    	self.AddItemBack(calb.DateValue.getMonth(), calb.DateValue.getFullYear());
+			    }
+			    for (i = 0; i < 4; i++)
+			    {
+			    	self.AddItemForth(calf.DateValue.getMonth(), calf.DateValue.getFullYear());
+			    	calf.NextMonth();
+			    }
+			    $(self.Parent).prepend("<li><a href='#'>&laquo;</a></li>");
+			    $(self.Parent).append("<li><a href='#'>&raquo;</a></li>");
+			    
+			    self.bindEvents();
+			}
+			
+			self.bindEvents = function()
+			{
+				$(self.Link).click(function()
+				{
+					if ($(this).text() == "«")
+					{
+						self.Prev();
+					}
+					else if ($(this).html() == "»")
+					{
+						self.Next();
+					}
+					else
+					{
+						index = $(this).html().search("<br>");
+						self.Selected.m = $(this).html().substring(0, index) - 1;
+						self.Selected.y = $(this).html().substring(index + 4);
+						self.Model.getData(self.Selected.y, self.Selected.m);
+					}
+					self.Build();
+				});
+			}
+			
+			self.Build();
+		}
+
 	
 		$("#global_nav a").click(function() {
 			$("#global_nav li").removeClass('active');
@@ -217,12 +339,17 @@
 			self.newTransactions = ko.observableArray([]);
 			self.newExpenseValue = ko.observable("");
 
-			$.getJSON("{% url easyfin.views.getExpenses %}", function(allData) {
-				$.each(allData, function(index, value) {
-					self.expenses.push(new Expense(value));
-				});
-			});
-
+			self.getData = function(year, month)
+			{
+				self.expenses.removeAll();
+				$.post('{% url easyfin.views.getExpenses %}', {'month': month, 'year': year},
+						function(allData) {
+							$.each(allData, function(index, value) {
+								self.expenses.push(new Expense(value));
+							});
+						});	
+			}
+			
 			self.editItemName = function(item) {
 				item.editing_name(true);
 			};
@@ -267,6 +394,7 @@
 		}
 
 		var model = new TaskListViewModel();
+		var expenseCalendar = new ExpenseDatePagination(model);
 		ko.applyBindings(model);
 
 		$(function() {

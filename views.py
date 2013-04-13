@@ -31,7 +31,11 @@ def debug(request):
 
 def getExpenses(request):
     data = []
-    p = Period.this_month()
+    
+    month = int(request.POST['month'])
+    year = int(request.POST['year'])
+    
+    p = Period.specific_month(year, month)
     for i in RegularExpenses.objects.all():
         plan = "{}.{}".format(i.amount, i.cents)
         real = "{}.{}".format(*i.money.get_income(p))
