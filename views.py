@@ -36,7 +36,7 @@ def getExpenses(request):
     year = int(request.POST['year'])
     
     p = Period.specific_month(year, month)
-    for i in RegularExpenses.objects.all():
+    for i in RegularExpenses.actual(p):
         plan = "{}.{}".format(i.amount, i.cents)
         real = "{}.{}".format(*i.money.get_income(p))
         data.append({'pk': i.pk, 'name': i.money.name, 'plan': plan, 'real': real})
@@ -46,13 +46,13 @@ def updateExpense(request):
     amount, cents = request.POST['plan'].split(".")
     amount = int(amount)
     cents = int(cents)
+    month = int(request.POST['month'])
+    year = int(request.POST['year'])
     
     data = RegularExpenses.objects.get(pk=request.POST['pk'])
-    data.money.name = request.POST['name']
-    data.amount = amount
-    data.cents = cents
-    data.money.save()
-    data.save()
+    
+    per = Period.specific_month(year, month)
+    data.Update(amount, cents, per.date_from)
     
     return HttpResponse("", content_type="application/json")
 
@@ -60,9 +60,12 @@ def newExpense(request):
     amount, cents = request.POST['plan'].split(".")
     amount = int(amount)
     cents = int(cents)
+    month = int(request.POST['month'])
+    year = int(request.POST['year'])
     
+    per = Period.specific_month(year, month)
     m = MoneyHolder.objects.create(name=request.POST['name'], initial=0, amount=0, cents=0)
-    p = RegularExpenses.objects.create(money=m, amount=amount, cents=cents, start=datetime.date.today(), stop=datetime.date.today())
+    p = RegularExpenses.objects.create(money=m, amount=amount, cents=cents, start=per.date_from, stop=None)
     
     return HttpResponse("", content_type="application/json")
 

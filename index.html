@@ -151,7 +151,7 @@
 			}
 		}
 	
-		function ExpenseDatePagination(model)
+		function ExpenseDatePagination(observer)
 		{
 			var self = this;
 			self.Current = new Calendar();
@@ -159,7 +159,7 @@
 			self.Selector = "#expense_date";
 			self.Parent = self.Selector + " ul";
 			self.Link = self.Selector + " a";
-			self.Model = model
+			self.Observer = observer
 			
 			self.Next = function()
 			{
@@ -209,7 +209,7 @@
 			    $(self.Parent).append("<li><a href='#'>&raquo;</a></li>");
 			    
 			    self.bindEvents();
-			    self.Model.getData(self.Selected.y, self.Selected.m + 1);
+			    self.Observer.update(self.Selected.y, self.Selected.m + 1);
 			}
 			
 			self.bindEvents = function()
@@ -339,10 +339,10 @@
 			self.newTransactions = ko.observableArray([]);
 			self.newExpenseValue = ko.observable("");
 
-			self.getData = function(year, month)
+			self.getData = function()
 			{
 				self.expenses.removeAll();
-				$.post('{% url easyfin.views.getExpenses %}', {'month': month, 'year': year},
+				$.post('{% url easyfin.views.getExpenses %}', {'month': self.month, 'year': self.year},
 						function(allData) {
 							$.each(allData, function(index, value) {
 								self.expenses.push(new Expense(value));
@@ -364,6 +364,8 @@
 
 				item.editing_name(false);
 				item.editing_plan(false);
+				item['month'] = self.month;
+				item['year'] = self.year;
 
 				$.post('{% url easyfin.views.updateExpense %}', item,
 						function(data) {
@@ -383,12 +385,21 @@
 				item['name'] = newValue.substr(0, lastSpace).trim();
 				item['plan'] = newValue.substr(lastSpace + 1);
 				item['real'] = "0.0";
+				item['month'] = self.month;
+				item['year'] = self.year;
 
 				$.post('{% url easyfin.views.newExpense %}', item, function(data) {
 
 				});
 
 				self.expenses.push(new Expense(item));
+			};
+			
+			self.update = function(year, month)
+			{
+				self.year = year;
+				self.month = month;
+				self.getData();
 			};
 
 		}

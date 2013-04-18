@@ -41,10 +41,25 @@ class RegularExpenses(models.Model):
     amount = models.IntegerField()
     cents = models.IntegerField()
     start = models.DateField()
-    stop = models.DateField()
+    stop = models.DateField(null=True)
     
     def __unicode__(self):
         return u"{} (from {} to {}): {}.{}".format(self.money.name, self.start, self.stop, self.amount, self.cents)
+    
+    @classmethod
+    def actual(cls, period):
+        return cls.objects.filter(models.Q(stop__exact = None) | models.Q(stop__exact = period.date_to), start__lte = period.date_from).order_by('money__name')
+    
+    def Update(self, amount, cents, start_date):
+        
+        if self.start.year != start_date.year or self.start.month != start_date.month:
+            self.stop = datetime.date(start_date.year,start_date.month, 1)
+            self.save()
+            return RegularExpenses.objects.create(money=self.money, amount=amount, cents=cents, start=start_date, stop=None)
+        else:
+            self.amount = amount
+            self.cents = cents
+            self.save()
     
 class Aim(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -79,19 +94,15 @@ class Period(object):
     @classmethod
     def this_month(cls):
         today = datetime.date.today()
-        return cls.month(today.year, today.month)
-    
-    @classmethod
-    def specific_month(cls, year, month):
-        return cls.month(year, month)
+        return cls.specific_month(today.year, today.month)
     
     @staticmethod
-    def month(year, month):
+    def specific_month(year, month):
         start = datetime.date(year, month, 1)
         days_in_month = calendar.monthrange(year, month)[1]
         end = start + datetime.timedelta(days = days_in_month)
         return Period(start, end)
-    
+        
     def __str__(self):
         return unicode(self)
     
