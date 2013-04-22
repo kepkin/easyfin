@@ -155,7 +155,7 @@
 		{
 			var self = this;
 			self.Current = new Calendar();
-			self.Selected = {'m': 3, 'y': 2013};
+			self.Selected = {'m': self.Current.DateValue.getMonth(), 'y': self.Current.DateValue.getFullYear()};
 			self.Selector = "#expense_date";
 			self.Parent = self.Selector + " ul";
 			self.Link = self.Selector + " a";
