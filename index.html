@@ -1,49 +1,87 @@
 {% load static from staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
+<head>
 <link rel="stylesheet" href='{% static "css/ui-lightness/jquery-ui-1.10.0.custom.min.css" %}' type="text/css" media="screen, projection">
 <link rel="stylesheet" href='{% static "bootstrap/css/bootstrap.min.css" %}' media="screen">
-
-<script type='text/javascript' src='{% static "knockout-2.2.1.js" %}'></script>
-<script type='text/javascript' src='{% static "jquery-1.9.0.min.js" %}'></script>
-<script type='text/javascript' src='{% static "js/jquery-ui-1.10.0.custom.min.js" %}'></script>
-<script type='text/javascript' src='{% static "js/upload/jquery.ui.widget.js" %}'></script>
-<script type='text/javascript' src='{% static "js/upload/jquery.iframe-transport.js" %}'></script>
-<script type='text/javascript' src='{% static "js/upload/jquery.fileupload.js" %}'></script>
-<script type='text/javascript' src='{% static "jquery.cookie.js" %}'></script>
+<!-- <link rel="stylesheet" href='{% static "bootstrap/css/bootstrap-responsive.min.css" %}' media="screen">  -->
+</head>
 <style>
 
+#transaction-popover {
+  left: 50%;
+  width: 400px;
+  margin-left: -200px;
+}
 
-#todo-list .edit {
+.modal_like {
+  padding: 15px;
+  background-color: #ffffff;
+  border: 1px solid #999;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  *border: 1px solid #999;
+  -webkit-border-radius: 6px;
+     -moz-border-radius: 6px;
+          border-radius: 6px;
+  outline: none;
+  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+     -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  -webkit-background-clip: padding-box;
+     -moz-background-clip: padding-box;
+          background-clip: padding-box;
+}
+
+#expense_date a {
+	height: 50px;
+}
+
+#expenses-list .edit {
 	display: none;
 }
 
-#todo-list .view {
+#expenses-list .view {
 	display: block;
 }
 
-#todo-list .editing .edit {
+#expenses-list .editing .edit {
 	display: block;
 }
 
-#todo-list .editing .view {
+#expenses-list .editing .view {
 	display: none;
 }
 
 #tabs { height: 98%; }
 
-#transaction_items .ui-selecting { background: #FECA40; }
-#transaction_items .ui-selected { background: #F39814; color: white; }
-#transaction_items { margin: 0; padding: 0;}
+.transaction_items .ui-selecting { background: #FECA40; }
+.transaction_items .ui-selected { background: #F9F9F9; }
+.transaction_items { margin: 0; padding: 0;}
 
 #expense_date li { text-align: center; }
 
 </style>
 
 <body>
-	<div class="container-fluid">
-		<div class="row-fluid">
-			<div class="navbar">
+	<div class="container">
+		<div id="transaction-popover" class="popover fade top in"
+		style="display: block; max-width: 100%;" id="transaction-popover">
+		<div class="arrow"></div>
+		<h3 class="popover-title">
+			Choose expense
+			<button type="button" class="close" data-dismiss="popover">&times;</button>
+		</h3>
+		<div class="popover-content input-append">
+			<select>
+				<option>food</option>
+				<option>flat</option>
+				<option>transport</option>
+			</select>
+			<button class="btn" type="button">Apply</button>
+		</div>
+	</div>
+		<div class="row">
+			<div class="navbar span8 offset2">
 				<div class="navbar-inner">
 					<a class="brand" href="#">Title</a>
 					<ul id="global_nav" class="nav">
@@ -54,29 +92,35 @@
 				</div>
 			</div>
 		</div>
-		<div class="row-fluid">
-			<div class="span12" id="global_nav_content">
+		<div class="row">
+			<div class="span8 offset2" id="global_nav_content">
 				<div id="expenses">
-
-					<div id="expense_date" class="pagination">
+					<div id="expense_date" class="pagination pagination-centered">
 						<ul>
 						</ul>
 					</div>
 
-					<table id="todo-list">
+					<table id="expenses-list" class="table table-condensed table-striped">
+					  <thead>
+					  	<tr>
+					  	  <th>Name</th>
+                          <th>Planned</th>
+                          <th>Actual</th>
+					  	</tr>
+					  </thead>
 					  <tbody data-bind="foreach: expenses">
 						<tr>
 							<td data-bind="css: { editing: editing_name }">
 								<div class="view">
 									<label data-bind="text: name, event: { dblclick: $root.editItemName }"></label>
 								</div>
-								<input class="edit" data-bind="value: name, selectAndFocus: editing_name, valueUpdate: 'afterkeydown', enterKey: $root.stopEditing, event: { blur: $root.stopEditing }">
+								<input type="text" class="edit" data-bind="value: name, selectAndFocus: editing_name, valueUpdate: 'afterkeydown', enterKey: $root.stopEditing, event: { blur: $root.stopEditing }">
 							</td>
 							<td data-bind="css: { editing: editing_plan }">
 								<div class="view">
 									<label data-bind="text: plan, event: { dblclick: $root.editItemPlan }"></label>
 								</div>
-								<input class="edit" data-bind="value: plan, valueUpdate: 'afterkeydown', enterKey: $root.stopEditing, selectAndFocus: editing_plan, event: { blur: $root.stopEditing }">
+								<input type="text" class="edit" data-bind="value: plan, valueUpdate: 'afterkeydown', enterKey: $root.stopEditing, selectAndFocus: editing_plan, event: { blur: $root.stopEditing }">
 							</td>
 							<td>
 								<div class="view">
@@ -86,340 +130,246 @@
 						</tr>
 						</tbody>
 					</table>
-					<label>Add new</label><br> <input class="edit" data-bind="value: newExpenseValue, enterKey: newExpense">
+					<form><fieldset>
+					<div class="input-append">
+					<input type="text" placeholder="expense name ##.#" data-bind="value: newExpenseValue, enterKey: newExpense">
+					<button class="btn" type="button">Add New</button>
+					</div>
+					<span class="help-block">You must enter price with cents like: 300.00</span>
+					</fieldset></form>
 				</div>
 				
 				<div id="transactions">
 					<div>
 						Load file
-						<form action="{% url easyfin.views.upload_file %}" enctype="multipart/form-data" method="post">
-							{% csrf_token %}
-							Please specify a file, or a set of files:
-							<input id="fileupload" type="file" name="file" data-url="{% url easyfin.views.upload_file %}">
+						<form action="{% url easyfin.views.upload_file %}"
+							enctype="multipart/form-data" method="post">
+							{% csrf_token %} Please specify a file, or a set of files: <input
+								id="fileupload" type="file" name="file"
+								data-url="{% url easyfin.views.upload_file %}">
 						</form>
 					</div>
-					<div id="transaction_items_table">
-					<table >
-					<tbody id="transaction_items" data-bind="foreach: newTransactions">
-						<tr>
-							<td data-bind="text: date"></td>
-							<td data-bind="text: comment"></td>
-							<td data-bind="text: income"></td>
-							<td data-bind="text: outcome"></td>
-						</tr>
-					</tbody>
-					</table>
+					<div id="transaction_items_table"
+						data-bind="foreach: newTransactions">
+						<div>
+							<span data-bind="text: category"></span>
+							<table class="table table-hover">
+								<tbody class="transaction_items" data-bind="foreach: data">
+									<tr>
+										<td data-bind="text: date"></td>
+										<td data-bind="text: comment"></td>
+										<td data-bind="text: income"></td>
+										<td data-bind="text: outcome"></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<script>
-		function Calendar()
-		{
-			this.DateValue = new Date();
-			var self = this;
-			
-			this.NextMonth = function()
-			{
-				cur_m = this.DateValue.getMonth();
-				cur_y = this.DateValue.getFullYear();
-				if (cur_m == 11)
-				{
-					cur_y = cur_y + 1;
-					cur_m = 1;
-				}
-				else
-				{
-					cur_m = cur_m + 2;
-				}
-				
-				this.DateValue = new Date(cur_y, cur_m, 0);
-			}
-			
-			this.PrevMonth = function()
-			{
-				cur_m = this.DateValue.getMonth();
-				cur_y = this.DateValue.getFullYear();
-				if (cur_m == 0)
-				{
-					cur_y = cur_y - 1;
-					cur_m = 12;
-				}
-				
-				this.DateValue = new Date(cur_y, cur_m, 0);
-			}
-		}
-	
-		function ExpenseDatePagination(observer)
-		{
-			var self = this;
-			self.Current = new Calendar();
-			self.Selected = {'m': self.Current.DateValue.getMonth(), 'y': self.Current.DateValue.getFullYear()};
-			self.Selector = "#expense_date";
-			self.Parent = self.Selector + " ul";
-			self.Link = self.Selector + " a";
-			self.Observer = observer
-			
-			self.Next = function()
-			{
-				self.Current.NextMonth();
-			}
-			
-			self.Prev = function()
-			{
-				self.Current.PrevMonth();
-			}
-			
-			
-			self.AddItemBack = function(month, year)
-			{
-				$(self.Parent).prepend(self.GetItemHtml(month, year));	
-			}
-			
-			self.AddItemForth = function(month, year)
-			{
-				$(self.Parent).append(self.GetItemHtml(month, year));	
-			}
-			
-			self.GetItemHtml = function(month, year)
-			{
-				result = month == self.Selected.m && year == self.Selected.y ? "<li class='active'>" : "<li>";
-				result = result + "<a href='#'>" + (month + 1) + "<br>" + year + "</a></li>";
-				return result;
-			}
-			
-			self.Build = function()
-			{
-				var calb = jQuery.extend(true, {}, self.Current);
-				var calf = jQuery.extend(true, {}, self.Current);
-				
-				$(self.Parent).html("");
-			    for (i = 0; i < 3; i++)
-			    {
-			    	calb.PrevMonth();
-			    	self.AddItemBack(calb.DateValue.getMonth(), calb.DateValue.getFullYear());
-			    }
-			    for (i = 0; i < 4; i++)
-			    {
-			    	self.AddItemForth(calf.DateValue.getMonth(), calf.DateValue.getFullYear());
-			    	calf.NextMonth();
-			    }
-			    $(self.Parent).prepend("<li><a href='#'>&laquo;</a></li>");
-			    $(self.Parent).append("<li><a href='#'>&raquo;</a></li>");
-			    
-			    self.bindEvents();
-			    self.Observer.update(self.Selected.y, self.Selected.m + 1);
-			}
-			
-			self.bindEvents = function()
-			{
-				$(self.Link).click(function()
-				{
-					if ($(this).text() == "«")
-					{
-						self.Prev();
-					}
-					else if ($(this).html() == "»")
-					{
-						self.Next();
-					}
-					else
-					{
-						index = $(this).html().search("<br>");
-						self.Selected.m = $(this).html().substring(0, index) - 1;
-						self.Selected.y = $(this).html().substring(index + 4);
-					}
-					self.Build();
-				});
-			}
-			
-			self.Build();
-		}
 
-	
-		$("#global_nav a").click(function() {
-			$("#global_nav li").removeClass('active');
-			$(this).parent().addClass('active');
-			
-			$("#global_nav_content>div").hide();
-			$($(this).attr('href')).show();
-		});
-	
-		function OnTransactionSelection(event, ui) {
-			var result = "";
-			t = $("#transaction_items .ui-selected")
-			t.each(function() {
-				var index = $( "#transaction_items tr" ).index(this);
-				result += ( " #" + ( index + 1 ) );
+
+	<!-- jQuery via Google + local fallback, see h5bp.com -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="{% static "jquery-1.9.0.min.js" %}"><\/script>')</script>
+
+<script type='text/javascript' src='{% static "js/jquery-ui-1.10.0.custom.min.js" %}'></script>
+<script type='text/javascript' src='{% static "js/upload/jquery.ui.widget.js" %}'></script>
+<script type='text/javascript' src='{% static "js/upload/jquery.iframe-transport.js" %}'></script>
+<script type='text/javascript' src='{% static "js/upload/jquery.fileupload.js" %}'></script>
+<script type='text/javascript' src='{% static "jquery.cookie.js" %}'></script>
+
+<script type='text/javascript' src='{% static "bootstrap/js/bootstrap.min.js" %}'></script>
+
+<script type='text/javascript' src='{% static "knockout-2.2.1.js" %}'></script>
+
+<script type='text/javascript' src='{% static "js/calendar.js" %}'></script>
+<script type='text/javascript' src='{% static "js/bootstrap_date_pagination_controller.js" %}'></script>
+<script type='text/javascript' src='{% static "js/expenses_view_model.js" %}'></script>
+
+<script>
+  	$("#global_nav a").click(function(e) {
+  	    e.preventDefault();
+  		$("#global_nav li").removeClass('active');
+  		$(this).parent().addClass('active');
+  		
+  		$("#global_nav_content>div").hide();
+  		$($(this).attr('href')).show();
+  	});
+
+  	$("#transaction-popover").hide();
+
+	// Django csrf token settings
+	var csrftoken = $.cookie('csrftoken');
+
+	function csrfSafeMethod(method) {
+		// these HTTP methods do not require CSRF protection
+		return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+	}
+	$.ajaxSetup({
+		crossDomain : false, // obviates need for sameOrigin test
+		beforeSend : function(xhr, settings) {
+			if (!csrfSafeMethod(settings.type)) {
+				xhr.setRequestHeader("X-CSRFToken", csrftoken);
+			}
+		}
+	});
+
+	// Knockout code
+	var ENTER_KEY = 13;
+
+	// a custom binding to handle the enter key (could go in a separate library)
+	ko.bindingHandlers.enterKey = {
+		init : function(element, valueAccessor, allBindingsAccessor, data) {
+			var wrappedHandler, newValueAccessor;
+
+			// wrap the handler with a check for the enter key
+			wrappedHandler = function(data, event) {
+				if (event.keyCode === ENTER_KEY) {
+					valueAccessor().call(this, data, event);
+				}
+			};
+
+			// create a valueAccessor with the options that we would want to pass to the event binding
+			newValueAccessor = function() {
+				return {
+					keyup : wrappedHandler
+				};
+			};
+
+			// call the real event binding's init function
+			ko.bindingHandlers.event.init(element, newValueAccessor,
+					allBindingsAccessor, data);
+		}
+	};
+
+	// wrapper to hasfocus that also selects text and applies focus async
+	ko.bindingHandlers.selectAndFocus = {
+		init : function(element, valueAccessor, allBindingsAccessor) {
+			ko.bindingHandlers.hasfocus.init(element, valueAccessor,
+					allBindingsAccessor);
+			ko.utils.registerEventHandler(element, 'focus', function() {
+				element.focus();
 			});
+		},
+		update : function(element, valueAccessor) {
+			ko.utils.unwrapObservable(valueAccessor()); // for dependency
+			// ensure that element is visible before trying to focus
+			setTimeout(function() {
+				ko.bindingHandlers.hasfocus.update(element, valueAccessor);
+			}, 0);
 		}
+	};
 	
-		$("#transaction_items").selectable({
-			  filter: "tr",
-		      stop: OnTransactionSelection
-		});
-
-		// Django csrf token settings
-		var csrftoken = $.cookie('csrftoken');
-
-		function csrfSafeMethod(method) {
-			// these HTTP methods do not require CSRF protection
-			return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-		}
-		$.ajaxSetup({
-			crossDomain : false, // obviates need for sameOrigin test
-			beforeSend : function(xhr, settings) {
-				if (!csrfSafeMethod(settings.type)) {
-					xhr.setRequestHeader("X-CSRFToken", csrftoken);
-				}
-			}
-		});
-
-		// Knockout code
-		var ENTER_KEY = 13;
-
-		// a custom binding to handle the enter key (could go in a separate library)
-		ko.bindingHandlers.enterKey = {
-			init : function(element, valueAccessor, allBindingsAccessor, data) {
-				var wrappedHandler, newValueAccessor;
-
-				// wrap the handler with a check for the enter key
-				wrappedHandler = function(data, event) {
-					if (event.keyCode === ENTER_KEY) {
-						valueAccessor().call(this, data, event);
+	function TransactionsViewModel() {
+		var self = this;
+		var categories = [];
+		self.newTransactions = ko.observableArray([]);
+		
+		self.updateTransactions = function(repository)
+		{
+		    for (var category in repository.Data)
+		    {
+		        for (var comment in repository.Data[category])
+				{
+					var item = {}
+					item.date = repository.Data[comment].length;
+					item.comment = comment;
+					item.income = 0;
+					item.outcome = 0;
+					
+					for (var transactionIndex in repository.Data[category][comment])
+					{
+						var transaction = repository.Data[category][comment][transactionIndex];
+						item.income = item.income + transaction.income;
+						item.outcome = item.outcome + transaction.outcome;
 					}
-				};
-
-				// create a valueAccessor with the options that we would want to pass to the event binding
-				newValueAccessor = function() {
-					return {
-						keyup : wrappedHandler
-					};
-				};
-
-				// call the real event binding's init function
-				ko.bindingHandlers.event.init(element, newValueAccessor,
-						allBindingsAccessor, data);
-			}
-		};
-
-		// wrapper to hasfocus that also selects text and applies focus async
-		ko.bindingHandlers.selectAndFocus = {
-			init : function(element, valueAccessor, allBindingsAccessor) {
-				ko.bindingHandlers.hasfocus.init(element, valueAccessor,
-						allBindingsAccessor);
-				ko.utils.registerEventHandler(element, 'focus', function() {
-					element.focus();
-				});
-			},
-			update : function(element, valueAccessor) {
-				ko.utils.unwrapObservable(valueAccessor()); // for dependency
-				// ensure that element is visible before trying to focus
-				setTimeout(function() {
-					ko.bindingHandlers.hasfocus.update(element, valueAccessor);
-				}, 0);
-			}
-		};
-
-		function Expense(value) {
-			var self = this;
-			self.name = ko.observable(value.name);
-			self.plan = ko.observable(value.plan);
-			self.real = ko.observable(value.real);
-			self.pk = value.pk;
-			self.editing_name = ko.observable(false);
-			self.editing_plan = ko.observable(false);
-		}
-
-		function TaskListViewModel() {
-			// Data
-			var self = this;
-			self.expenses = ko.observableArray([]);
-			self.newTransactions = ko.observableArray([]);
-			self.newExpenseValue = ko.observable("");
-
-			self.getData = function()
-			{
-				self.expenses.removeAll();
-				$.post('{% url easyfin.views.getExpenses %}', {'month': self.month, 'year': self.year},
-						function(allData) {
-							$.each(allData, function(index, value) {
-								self.expenses.push(new Expense(value));
-							});
-						});	
-			}
+					
+					self.newTransactions.push(item);
+				}    
+		    }
 			
-			self.editItemName = function(item) {
-				item.editing_name(true);
-			};
+		};
+	}
 
-			self.editItemPlan = function(item) {
-				item.editing_plan(true);
-			};
+	var urlExpensesViewModle = {};
+	urlExpensesViewModle.get = '{% url easyfin.views.getExpenses %}';
+	urlExpensesViewModle.update = '{% url easyfin.views.updateExpense %}';
+	urlExpensesViewModle.add = '{% url easyfin.views.newExpense %}';
+	
+	var expensesVM = new ExpensesViewModel(urlExpensesViewModle);
+	var transactionsVM = new TransactionsViewModel();
+	var expenseCalendar = new BootstrapDatePaginationController("expense_date", expensesVM);
+	
+	ko.applyBindings(expensesVM, document.getElementById("expenses"));
+	ko.applyBindings(transactionsVM, document.getElementById("transactions"));
 
-			self.stopEditing = function(item) {
-				if (!item.editing_name() && !item.editing_plan())
-					return;
-
-				item.editing_name(false);
-				item.editing_plan(false);
-				item['month'] = self.month;
-				item['year'] = self.year;
-
-				$.post('{% url easyfin.views.updateExpense %}', item,
-						function(data) {
-
-						});
-			};
-
-			self.newExpense = function() {
-				var newValue = self.newExpenseValue().trim()
-				var lastSpace = newValue.lastIndexOf(" ");
-				if (lastSpace == -1) {
-					alert("invalid syntax");
-					return;
-				}
-
-				var item = {};
-				item['name'] = newValue.substr(0, lastSpace).trim();
-				item['plan'] = newValue.substr(lastSpace + 1);
-				item['real'] = "0.0";
-				item['month'] = self.month;
-				item['year'] = self.year;
-
-				$.post('{% url easyfin.views.newExpense %}', item, function(data) {
-
-				});
-
-				self.expenses.push(new Expense(item));
-			};
+	
+	function TransactionPopoverWidget() {
+	    var self = this;
+	    var targetEvent;
+	    
+	    self.show = function(event)
+	    {
+	      targetEvent = event;
+	      $("#transaction-popover").css({top: $($(targetEvent.target).children(".ui-selected").get(0)).offset().top - $("#transaction-popover").height()});
+		  $("#transaction-popover").show();  
+	    };
+	    
+	    self.apply = function()
+	    {
+	        var result = [];
+			$(targetEvent.target).children(".ui-selected").each(function(index) {
+				var index = $(targetEvent.target).children("tr").index(this);
+				var d = transactionsVM.newTransactions()[0].data()[index];
+				transactionsVM.newTransactions()[1].data.push(d);
+				result.push(d);
+			});
+			$.each(result, function(index,el) { transactionsVM.newTransactions()[0].data.remove(el)});
 			
-			self.update = function(year, month)
-			{
-				self.year = year;
-				self.month = month;
-				self.getData();
-			};
-
-		}
-
-		var model = new TaskListViewModel();
-		var expenseCalendar = new ExpenseDatePagination(model);
-		ko.applyBindings(model);
-
-		$(function() {
-			$('#fileupload').fileupload({
-				dataType : 'json',
-				done : function(e, data) {
-					$.each(data.result.files, function(i, file) {
-						$.each(file.data, function(j, row) {
-							model.newTransactions.push(row);
-						});
+			$("#transaction-popover").hide();
+	    };
+	    
+	    $("#transaction-popover .popover-title .close").click(function() {
+	        $("#transaction-popover").hide();
+	    });
+	    
+	    $("#transaction-popover .popover-content .btn").click(function() {
+	        self.apply();
+	    });
+	}
+	
+	var transactionPopover = new TransactionPopoverWidget();
+	
+	function OnTransactionSelection(event, ui) {
+	    transactionPopover.show(event);
+	}
+	
+	
+	$(function() {
+		$('#fileupload').fileupload({
+			dataType : 'json',
+			done : function(e, data) {
+				$.each(data.result.files, function(i, file) {
+					$.each(file.data, function(j, row) {
+					    var a_row = {};
+					    a_row.category = row.category;
+					    a_row.data = ko.observableArray([]);
+					    $.each(row.data, function(k, data_row) {
+					        a_row.data.push(data_row);
+					    });
+						transactionsVM.newTransactions.push(a_row);
 					});
-				}
-			});
+				});
+				$(".transaction_items").selectable({
+					  filter: "tr",
+					  stop: OnTransactionSelection
+				});
+			}
 		});
-	</script>
+	});
+</script>
 </body>
 </html>

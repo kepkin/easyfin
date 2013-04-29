@@ -6,6 +6,7 @@ from django.core import serializers
 import json
 import datetime
 from exceptions import Exception
+from collections import defaultdict
 
 def index(request):
     latest_poll_list = RegularExpenses.objects.all()
@@ -69,32 +70,66 @@ def newExpense(request):
     
     return HttpResponse("", content_type="application/json")
 
-def AlfaBankRowToHash(row):
-    row = row.split(';')
+def AlfaReduce(result, row):
+    def GetShortComment(comment):
+        return " ".join([i for i in comment.split(" ") if not i == ''][1:-4])
+    
     result_row = {}
+    result_row['raw'] = row
+    row = row.split(';')
+    
     result_row['date'] = row[3]
+    result_row['short_comment'] = GetShortComment(row[5])
     result_row['comment'] = row[5]
-    result_row['income'] = row[6]
-    result_row['outcome'] = row[7]
-    return result_row
-
+    # TODO: float is incorrect for money
+    result_row['income'] = float(row[6].replace(",", "."))
+    result_row['outcome'] = float(row[7].replace(",", "."))
+    
+    result[AlfaCategory(result_row['comment'])].append(result_row)
+    return result
+    
+def AlfaCategory(comment):
+    if comment.find("PEREK") != -1:
+        return "food"
+    else:
+        return "unknown"
+    
+    
 def upload_file(request):
     if request.method != 'POST':
         return HttpResponse("", content_type="application/json")
     
     file_data = request.FILES['file']
-    data = reduce(lambda x,y: x + y.decode('cp1251'), file_data, u"")
+    #data = reduce(lambda x,y: x + y.decode('cp1251'), file_data, u"")
     
-    arr = data.split("\n")
-    arr.remove("")
-    del arr[0]
+    def ignoreEmptyLine(x,y, delegate):
+        if y != "":
+            return delegate(x,y)
+        else:
+            return x
     
-    result_arr = map(AlfaBankRowToHash, arr)
-    result_arr.sort(lambda x,y: cmp(x['comment'],y['comment']))
+    #arr = data.split("\n")
+    #arr.remove("")
+    #del arr[0]
+    
+    #result_arr = map(AlfaBankRowToHash, arr)
+    #result_arr = reduce(AlfaReduce, arr, defaultdict(list))
+    #result_arr.sort(lambda x,y: cmp(x['comment'],y['comment']))
+    file_iter = file_data.__iter__() #ignore title
+    file_iter.next()
+    result_arr = reduce(lambda x,y: ignoreEmptyLine(x,y.decode('cp1251'),AlfaReduce), file_iter, defaultdict(list))
     
     file_response = {}
+    file_response['data'] = []
+    
+    for k,v in result_arr.iteritems():
+        new_v = {}
+        
+        new_v['category'] = k
+        new_v['data'] = v
+        file_response['data'].append(new_v)
+    
     file_response['name'] = 'lala'
-    file_response['data'] = result_arr
     test_response = {}
     test_response['files']=[]
     test_response['files'].append(file_response)
