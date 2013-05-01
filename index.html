@@ -11,6 +11,7 @@
 #transaction-popover {
   left: 50%;
   width: 400px;
+  max-width: 400px;
   margin-left: -200px;
 }
 
@@ -65,21 +66,19 @@
 <body>
 	<div class="container">
 		<div id="transaction-popover" class="popover fade top in"
-		style="display: block; max-width: 100%;" id="transaction-popover">
-		<div class="arrow"></div>
-		<h3 class="popover-title">
-			Choose expense
-			<button type="button" class="close" data-dismiss="popover">&times;</button>
-		</h3>
-		<div class="popover-content input-append">
-			<select>
-				<option>food</option>
-				<option>flat</option>
-				<option>transport</option>
-			</select>
-			<button class="btn" type="button">Apply</button>
+			id="transaction-popover">
+			<div class="arrow"></div>
+			<h3 class="popover-title">
+				Choose expense
+				<button type="button" class="close" data-dismiss="popover">&times;</button>
+			</h3>
+			<div class="popover-content input-append">
+				<select data-bind="foreach: moneyList">
+					<option data-bind="text: $data"></option>
+				</select>
+				<button class="btn" type="button">Apply</button>
+			</div>
 		</div>
-	</div>
 		<div class="row">
 			<div class="navbar span8 offset2">
 				<div class="navbar-inner">
@@ -311,6 +310,17 @@
 	    var self = this;
 	    var targetEvent;
 	    
+	    self.moneyList = ko.observableArray([]);
+
+	    function getData() {
+	        self.moneyList.removeAll();
+	        $.post('{% url easyfin.views.getMoneyList %}', {}, function(allData) {
+	            $.each(allData, function(index, value) {
+	                self.moneyList.push(value);
+	            });
+	        });
+	    };
+	    
 	    self.show = function(event)
 	    {
 	      targetEvent = event;
@@ -318,58 +328,79 @@
 		  $("#transaction-popover").show();  
 	    };
 	    
-	    self.apply = function()
+	    function findIndexByCategory(category)
 	    {
-	        var result = [];
-			$(targetEvent.target).children(".ui-selected").each(function(index) {
-				var index = $(targetEvent.target).children("tr").index(this);
-				var d = transactionsVM.newTransactions()[0].data()[index];
-				transactionsVM.newTransactions()[1].data.push(d);
-				result.push(d);
-			});
-			$.each(result, function(index,el) { transactionsVM.newTransactions()[0].data.remove(el)});
-			
-			$("#transaction-popover").hide();
-	    };
-	    
-	    $("#transaction-popover .popover-title .close").click(function() {
-	        $("#transaction-popover").hide();
-	    });
-	    
-	    $("#transaction-popover .popover-content .btn").click(function() {
-	        self.apply();
-	    });
-	}
-	
-	var transactionPopover = new TransactionPopoverWidget();
-	
-	function OnTransactionSelection(event, ui) {
-	    transactionPopover.show(event);
-	}
-	
-	
-	$(function() {
-		$('#fileupload').fileupload({
-			dataType : 'json',
-			done : function(e, data) {
-				$.each(data.result.files, function(i, file) {
-					$.each(file.data, function(j, row) {
-					    var a_row = {};
-					    a_row.category = row.category;
-					    a_row.data = ko.observableArray([]);
-					    $.each(row.data, function(k, data_row) {
-					        a_row.data.push(data_row);
-					    });
-						transactionsVM.newTransactions.push(a_row);
-					});
-				});
-				$(".transaction_items").selectable({
-					  filter: "tr",
-					  stop: OnTransactionSelection
-				});
-			}
-		});
-	});
+    		for ( var i = 0; i < transactionsVM.newTransactions().length; i = i + 1) {
+                if (transactionsVM.newTransactions()[i].category === category) {
+                    return i;
+                }
+            }
+        }
+
+        self.apply = function() {
+            var category = $("#transaction-popover select").val();
+            var caregoryIndex = findIndexByCategory(category);
+            //TODO: is it possible to remove by index? Make this code faster?
+            var result = [];
+            $(targetEvent.target).children(".ui-selected")
+                    .each(
+                            function(index) {
+                                var index = $(targetEvent.target)
+                                        .children("tr").index(this);
+                                var d = transactionsVM.newTransactions()[0]
+                                        .data()[index];
+                                transactionsVM.newTransactions()[categoryIndex].data
+                                        .push(d);
+                                result.push(d);
+                            });
+            $.each(result, function(index, el) {
+                transactionsVM.newTransactions()[0].data.remove(el)
+            });
+
+            $("#transaction-popover").hide();
+        };
+
+        $("#transaction-popover .popover-title .close").click(function() {
+            $("#transaction-popover").hide();
+        });
+
+        $("#transaction-popover .popover-content .btn").click(function() {
+            self.apply();
+        });
+
+        getData();
+    }
+
+    var transactionPopover = new TransactionPopoverWidget();
+    ko.applyBindings(transactionPopover, document
+            .getElementById("transaction-popover"));
+
+    function OnTransactionSelection(event, ui) {
+        transactionPopover.show(event);
+    }
+
+    $(function() {
+        $('#fileupload').fileupload({
+            dataType : 'json',
+            done : function(e, data) {
+                $.each(data.result.files, function(i, file) {
+                    $.each(file.data, function(j, row) {
+                        var a_row = {};
+                        a_row.category = row.category;
+                        a_row.data = ko.observableArray([]);
+                        $.each(row.data, function(k, data_row) {
+                            a_row.data.push(data_row);
+                        });
+                        transactionsVM.newTransactions.push(a_row);
+                    });
+                });
+                $(".transaction_items").selectable({
+                    filter : "tr",
+                    stop : OnTransactionSelection
+                });
+            }
+        });
+    });
 </script>
 </body>
 </html>

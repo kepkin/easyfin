@@ -139,3 +139,10 @@ def upload_file(request):
 def changeExpense(request):
     
     return HttpResponse(str(request.GET), content_type="application/json")
+
+def getMoneyList(request):
+    data = []
+    
+    for i in MoneyHolder.objects.all():
+        data.append(i.name)
+    return HttpResponse(json.dumps(data), content_type="application/json")
